@@ -159,4 +159,106 @@ describe('createQueryRunner', () => {
       expect(conn.release).toHaveBeenCalled();
     });
   });
+
+  describe('withConnection', () => {
+    it('비readonly 모드에서 하나의 connection으로 여러 쿼리를 실행한다', async () => {
+      const conn = createMockConnection();
+      (conn.query as ReturnType<typeof vi.fn>)
+        .mockResolvedValueOnce([[{ db: 'testdb' }]])
+        .mockResolvedValueOnce([[{ id: 1 }]]);
+      const pool = {
+        query: vi.fn(),
+        getConnection: vi.fn().mockResolvedValue(conn),
+      } as unknown as Pool;
+      const runner = createQueryRunner(pool, { readonly: false, queryTimeout: 0 });
+
+      await runner.withConnection(async (query) => {
+        await query('SELECT DATABASE()');
+        await query('SELECT * FROM users');
+      });
+
+      expect(pool.getConnection).toHaveBeenCalledTimes(1);
+      expect(conn.query).toHaveBeenCalledTimes(2);
+      expect(conn.release).toHaveBeenCalled();
+    });
+
+    it('readonly 모드에서 SET READ ONLY + BEGIN을 한 번만 실행한다', async () => {
+      const conn = createMockConnection();
+      (conn.query as ReturnType<typeof vi.fn>)
+        .mockResolvedValueOnce([]) // SET READ ONLY
+        .mockResolvedValueOnce([[{ db: 'testdb' }]]) // query 1
+        .mockResolvedValueOnce([[{ id: 1 }]]); // query 2
+      const pool = {
+        query: vi.fn(),
+        getConnection: vi.fn().mockResolvedValue(conn),
+      } as unknown as Pool;
+      const runner = createQueryRunner(pool, { readonly: true, queryTimeout: 0 });
+
+      await runner.withConnection(async (query) => {
+        await query('SELECT DATABASE()');
+        await query('SELECT * FROM users');
+      });
+
+      expect(pool.getConnection).toHaveBeenCalledTimes(1);
+      expect(conn.beginTransaction).toHaveBeenCalledTimes(1);
+      expect(conn.rollback).toHaveBeenCalledTimes(1);
+      expect(conn.release).toHaveBeenCalled();
+
+      const calls = (conn.query as ReturnType<typeof vi.fn>).mock.calls.map((c) => c[0]);
+      expect(calls[0]).toBe('SET SESSION TRANSACTION READ ONLY');
+      expect(calls[1]).toBe('SELECT DATABASE()');
+      expect(calls[2]).toBe('SELECT * FROM users');
+    });
+
+    it('콜백의 반환값을 전달한다', async () => {
+      const conn = createMockConnection();
+      (conn.query as ReturnType<typeof vi.fn>).mockResolvedValue([[{ id: 1 }]]);
+      const pool = {
+        query: vi.fn(),
+        getConnection: vi.fn().mockResolvedValue(conn),
+      } as unknown as Pool;
+      const runner = createQueryRunner(pool, { readonly: false, queryTimeout: 0 });
+
+      const result = await runner.withConnection(async (query) => {
+        const [rows] = await query('SELECT 1');
+        return rows;
+      });
+
+      expect(result).toEqual([{ id: 1 }]);
+    });
+
+    it('에러 시에도 connection을 release한다', async () => {
+      const conn = createMockConnection();
+      const pool = {
+        query: vi.fn(),
+        getConnection: vi.fn().mockResolvedValue(conn),
+      } as unknown as Pool;
+      const runner = createQueryRunner(pool, { readonly: false, queryTimeout: 0 });
+
+      await expect(
+        runner.withConnection(async () => {
+          throw new Error('test error');
+        }),
+      ).rejects.toThrow('test error');
+      expect(conn.release).toHaveBeenCalled();
+    });
+
+    it('readonly 모드에서 에러 시 rollback 후 release한다', async () => {
+      const conn = createMockConnection();
+      (conn.query as ReturnType<typeof vi.fn>).mockResolvedValueOnce([]); // SET READ ONLY
+      const pool = {
+        query: vi.fn(),
+        getConnection: vi.fn().mockResolvedValue(conn),
+      } as unknown as Pool;
+      const runner = createQueryRunner(pool, { readonly: true, queryTimeout: 0 });
+
+      await expect(
+        runner.withConnection(async () => {
+          throw new Error('test error');
+        }),
+      ).rejects.toThrow('test error');
+      expect(conn.rollback).toHaveBeenCalled();
+      expect(conn.release).toHaveBeenCalled();
+    });
+  });
 });
