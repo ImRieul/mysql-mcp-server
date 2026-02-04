@@ -1,7 +1,10 @@
 import type { Pool } from 'mysql2/promise';
 
+type QueryFn = (sql: string) => Promise<[unknown, unknown]>;
+
 export interface QueryRunner {
   query(sql: string): Promise<[unknown, unknown]>;
+  withConnection<T>(fn: (query: QueryFn) => Promise<T>): Promise<T>;
 }
 
 export class QueryTimeoutError extends Error {
@@ -46,6 +49,38 @@ export function createQueryRunner(pool: Pool, options: QueryRunnerOptions): Quer
           await conn.rollback();
         } catch {
           // rollback 실패 무시
+        }
+        throw error;
+      } finally {
+        conn.release();
+      }
+    },
+
+    async withConnection<T>(fn: (query: QueryFn) => Promise<T>): Promise<T> {
+      const conn = await pool.getConnection();
+      try {
+        if (readonly) {
+          await conn.query('SET SESSION TRANSACTION READ ONLY');
+          await conn.beginTransaction();
+        }
+
+        const queryFn: QueryFn = (sql: string) =>
+          withTimeout(conn.query(sql) as Promise<[unknown, unknown]>, queryTimeout);
+
+        const result = await fn(queryFn);
+
+        if (readonly) {
+          await conn.rollback();
+        }
+
+        return result;
+      } catch (error) {
+        if (readonly) {
+          try {
+            await conn.rollback();
+          } catch {
+            // rollback 실패 무시
+          }
         }
         throw error;
       } finally {
