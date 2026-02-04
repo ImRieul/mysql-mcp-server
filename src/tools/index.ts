@@ -10,6 +10,7 @@ import {
   describeAllTablesToolConfig,
   createDescribeAllTablesHandler,
 } from './describe-all-tables.js';
+import { addCommentToolName, addCommentToolConfig, createAddCommentHandler } from './add-comment.js';
 
 export function registerAllTools(server: McpServer, runner: QueryRunner, readonly: boolean, maxRows: number): void {
   server.tool(
@@ -42,5 +43,11 @@ export function registerAllTools(server: McpServer, runner: QueryRunner, readonl
     describeAllTablesToolConfig.description,
     describeAllTablesToolConfig.inputSchema,
     createDescribeAllTablesHandler(runner),
+  );
+  server.tool(
+    addCommentToolName,
+    addCommentToolConfig.description,
+    addCommentToolConfig.inputSchema,
+    createAddCommentHandler(runner, readonly),
   );
 }

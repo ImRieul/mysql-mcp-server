@@ -10,13 +10,13 @@ describe('registerAllTools', () => {
     } as unknown as McpServer;
   }
 
-  it('6개의 tool을 등록한다', () => {
+  it('7개의 tool을 등록한다', () => {
     const server = createMockServer();
     const runner = { query: vi.fn() } as unknown as QueryRunner;
 
     registerAllTools(server, runner, false, 100);
 
-    expect(server.tool).toHaveBeenCalledTimes(6);
+    expect(server.tool).toHaveBeenCalledTimes(7);
   });
 
   it('올바른 tool 이름으로 등록한다', () => {
@@ -32,5 +32,6 @@ describe('registerAllTools', () => {
     expect(toolNames).toContain('list_tables');
     expect(toolNames).toContain('describe_table');
     expect(toolNames).toContain('describe_all_tables');
+    expect(toolNames).toContain('add_comment');
   });
 });
