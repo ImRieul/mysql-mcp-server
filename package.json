@@ -1,6 +1,6 @@
 {
   "name": "@imrieul/mysql-mcp-server",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "MySQL MCP Server - Simple Model Context Protocol server for MySQL database operations",
   "type": "module",
   "bin": {
