@@ -39,6 +39,10 @@
     "ai",
     "database"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ImRieul/mysql-mcp-server.git"
+  },
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.25.0",
