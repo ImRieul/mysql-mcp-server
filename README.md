@@ -1,6 +1,6 @@
 # @imrieul/mysql-mcp-server
 
-[한국어](./README.ko.md) | [日本語](./README.ja.md) | [中文](./README.zh.md) | [Español](./README.es.md) | [Português](./README.pt.md) | [Français](./README.fr.md) | [Русский](./README.ru.md)
+[한국어](https://github.com/ImRieul/mysql-mcp-server/blob/main/README.ko.md) | [日本語](https://github.com/ImRieul/mysql-mcp-server/blob/main/README.ja.md) | [中文](https://github.com/ImRieul/mysql-mcp-server/blob/main/README.zh.md) | [Español](https://github.com/ImRieul/mysql-mcp-server/blob/main/README.es.md) | [Português](https://github.com/ImRieul/mysql-mcp-server/blob/main/README.pt.md) | [Français](https://github.com/ImRieul/mysql-mcp-server/blob/main/README.fr.md) | [Русский](https://github.com/ImRieul/mysql-mcp-server/blob/main/README.ru.md)
 
 A simple MySQL [MCP](https://modelcontextprotocol.io/) server.
 
