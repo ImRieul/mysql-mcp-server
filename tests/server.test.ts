@@ -19,10 +19,10 @@ describe('createMcpServer', () => {
     expect(server.tool).toBeDefined();
   });
 
-  it('6개의 tool을 등록한다', () => {
+  it('7개의 tool을 등록한다', () => {
     const runner = { query: vi.fn() } as unknown as QueryRunner;
     const server = createMcpServer(runner, false, 100);
 
-    expect(server.tool).toHaveBeenCalledTimes(6);
+    expect(server.tool).toHaveBeenCalledTimes(7);
   });
 });
