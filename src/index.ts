@@ -15,17 +15,15 @@ async function main(): Promise<void> {
   const server = createMcpServer(runner, config.readonly, config.maxRows);
   const transport = new StdioServerTransport();
 
-  process.on('SIGINT', async () => {
+  const shutdown = async () => {
     await server.close();
     await connectionManager.close();
     process.exit(0);
-  });
+  };
 
-  process.on('SIGTERM', async () => {
-    await server.close();
-    await connectionManager.close();
-    process.exit(0);
-  });
+  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', shutdown);
+  process.stdin.on('end', shutdown);
 
   console.error('MySQL MCP Server starting...');
   console.error(`Readonly mode: ${config.readonly}`);
