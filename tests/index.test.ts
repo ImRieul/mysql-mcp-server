@@ -10,6 +10,12 @@ vi.mock('@modelcontextprotocol/sdk/server/stdio.js', () => ({
 }));
 
 vi.mock('../src/config.js', () => ({
+  parseArgs: vi.fn(() => ({
+    connectionString: undefined,
+    readonly: false,
+    help: false,
+    version: false,
+  })),
   resolveConfig: vi.fn(() => ({
     mysql: { host: 'localhost', port: 3306, user: 'root', password: 'secret' },
     readonly: false,

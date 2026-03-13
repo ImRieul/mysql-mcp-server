@@ -3,12 +3,16 @@ import type { QueryRunner } from '../query-runner.js';
 import { formatError } from './error-hint.js';
 import { resolveDatabase } from './resolve-database.js';
 import { quoteStringValue } from './sql-escape.js';
+import { validateIdentifier } from './validate-input.js';
 
 export const listTablesToolName = 'list_tables';
 
 export const listTablesToolConfig = {
   title: 'List Tables',
-  description: 'List all tables in the specified database (or the current database if not specified).',
+  description:
+    'List all tables in the specified database (or the current database if not specified). ' +
+    'Includes table comments when available. ' +
+    'Use this before describe_table to find the exact table name.',
   inputSchema: {
     database: z.string().optional().describe('Database name. Uses the current database if omitted.'),
   },
@@ -16,6 +20,16 @@ export const listTablesToolConfig = {
 
 export function createListTablesHandler(runner: QueryRunner) {
   return async ({ database }: { database?: string }) => {
+    if (database) {
+      const dbValidation = validateIdentifier(database, 'Database');
+      if (!dbValidation.valid) {
+        return {
+          isError: true as const,
+          content: [{ type: 'text' as const, text: dbValidation.message! }],
+        };
+      }
+    }
+
     try {
       return await runner.withConnection(async (query) => {
         const db = await resolveDatabase(query, database);

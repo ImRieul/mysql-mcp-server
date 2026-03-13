@@ -132,4 +132,17 @@ describe('describe_all_tables tool handler', () => {
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain('Access denied');
   });
+
+  describe('입력 검증', () => {
+    it('database명에 위험 패턴이 포함되면 거부한다', async () => {
+      const query = vi.fn();
+      const handler = createDescribeAllTablesHandler(createMockRunner(query));
+
+      const result = await handler({ database: 'db/*comment' });
+
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain('dangerous characters');
+      expect(query).not.toHaveBeenCalled();
+    });
+  });
 });

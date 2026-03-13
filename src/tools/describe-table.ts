@@ -4,12 +4,16 @@ import { formatError } from './error-hint.js';
 import { resolveDatabase } from './resolve-database.js';
 import { quoteStringValue } from './sql-escape.js';
 import { formatColumn } from './format-column.js';
+import { validateIdentifier } from './validate-input.js';
 
 export const describeTableToolName = 'describe_table';
 
 export const describeTableToolConfig = {
   title: 'Describe Table',
-  description: 'Show the schema/structure of a table, including column names, types, constraints, and comments.',
+  description:
+    'Show the schema/structure of a table, including column names, types, constraints, and comments. ' +
+    'Use this before writing queries to ensure correct column names and types. ' +
+    'For inspecting all tables at once, use describe_all_tables instead.',
   inputSchema: {
     table: z.string().describe('Table name to describe.'),
     database: z.string().optional().describe('Database name. Uses the current database if omitted.'),
@@ -18,6 +22,24 @@ export const describeTableToolConfig = {
 
 export function createDescribeTableHandler(runner: QueryRunner) {
   return async ({ table, database }: { table: string; database?: string }) => {
+    const tableValidation = validateIdentifier(table, 'Table');
+    if (!tableValidation.valid) {
+      return {
+        isError: true as const,
+        content: [{ type: 'text' as const, text: tableValidation.message! }],
+      };
+    }
+
+    if (database) {
+      const dbValidation = validateIdentifier(database, 'Database');
+      if (!dbValidation.valid) {
+        return {
+          isError: true as const,
+          content: [{ type: 'text' as const, text: dbValidation.message! }],
+        };
+      }
+    }
+
     try {
       return await runner.withConnection(async (query) => {
         const db = await resolveDatabase(query, database);

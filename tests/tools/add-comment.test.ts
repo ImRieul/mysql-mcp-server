@@ -151,4 +151,88 @@ describe('add_comment tool handler', () => {
       expect(result.content[0].text).toContain('Access denied');
     });
   });
+
+  describe('dryRun', () => {
+    it('dryRun=true면 테이블 주석 SQL을 미리보기한다', async () => {
+      const query = vi.fn().mockResolvedValue([{ affectedRows: 0 }]);
+      const handler = createAddCommentHandler(createMockRunner(query), false);
+
+      const result = await handler({ table: 'users', comment: '사용자 테이블', database: 'mydb', dryRun: true });
+
+      expect(result.content[0].text).toContain('[dry-run]');
+      expect(result.content[0].text).toContain("ALTER TABLE `mydb`.`users` COMMENT = '사용자 테이블'");
+      // ALTER 실행 안 됨 (resolveDatabase 호출만 있을 수 있음)
+    });
+
+    it('dryRun=true면 컬럼 주석 SQL을 미리보기한다', async () => {
+      const colInfo = {
+        COLUMN_TYPE: 'varchar(255)',
+        IS_NULLABLE: 'YES',
+        COLUMN_DEFAULT: null,
+        EXTRA: '',
+      };
+      const query = vi.fn().mockResolvedValueOnce([[colInfo]]);
+      const handler = createAddCommentHandler(createMockRunner(query), false);
+
+      const result = await handler({ table: 'users', column: 'name', comment: '이름', database: 'mydb', dryRun: true });
+
+      expect(result.content[0].text).toContain('[dry-run]');
+      expect(result.content[0].text).toContain("MODIFY COLUMN `name` varchar(255) COMMENT '이름'");
+    });
+
+    it('dryRun=false면 실제로 실행한다', async () => {
+      const query = vi.fn().mockResolvedValue([{ affectedRows: 0 }]);
+      const handler = createAddCommentHandler(createMockRunner(query), false);
+
+      const result = await handler({ table: 'users', comment: '사용자', database: 'mydb', dryRun: false });
+
+      expect(result.content[0].text).toContain('Table comment updated');
+    });
+  });
+
+  describe('입력 검증', () => {
+    it('테이블명에 세미콜론이 포함되면 거부한다', async () => {
+      const query = vi.fn();
+      const handler = createAddCommentHandler(createMockRunner(query), false);
+
+      const result = await handler({ table: 'users; DROP TABLE users', comment: '테스트', database: 'mydb' });
+
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain('dangerous characters');
+      expect(query).not.toHaveBeenCalled();
+    });
+
+    it('컬럼명에 주석 패턴이 포함되면 거부한다', async () => {
+      const query = vi.fn();
+      const handler = createAddCommentHandler(createMockRunner(query), false);
+
+      const result = await handler({ table: 'users', column: 'name--', comment: '테스트', database: 'mydb' });
+
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain('dangerous characters');
+      expect(query).not.toHaveBeenCalled();
+    });
+
+    it('database명에 위험 패턴이 포함되면 거부한다', async () => {
+      const query = vi.fn();
+      const handler = createAddCommentHandler(createMockRunner(query), false);
+
+      const result = await handler({ table: 'users', comment: '테스트', database: 'db/*' });
+
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain('dangerous characters');
+      expect(query).not.toHaveBeenCalled();
+    });
+
+    it('빈 테이블명을 거부한다', async () => {
+      const query = vi.fn();
+      const handler = createAddCommentHandler(createMockRunner(query), false);
+
+      const result = await handler({ table: '', comment: '테스트', database: 'mydb' });
+
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain('cannot be empty');
+      expect(query).not.toHaveBeenCalled();
+    });
+  });
 });

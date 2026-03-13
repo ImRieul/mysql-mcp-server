@@ -4,13 +4,15 @@ import { formatError } from './error-hint.js';
 import { resolveDatabase } from './resolve-database.js';
 import { quoteStringValue } from './sql-escape.js';
 import { formatColumn } from './format-column.js';
+import { validateIdentifier } from './validate-input.js';
 
 export const describeAllTablesToolName = 'describe_all_tables';
 
 export const describeAllTablesToolConfig = {
   title: 'Describe All Tables',
   description:
-    'Show the schema of all tables at once. Much more efficient than calling describe_table for each table individually.',
+    'Show the schema of all tables at once. Much more efficient than calling describe_table for each table individually. ' +
+    'Warning: response can be large for databases with many tables — prefer describe_table for specific tables when possible.',
   inputSchema: {
     database: z.string().optional().describe('Database name. Uses the current database if omitted.'),
   },
@@ -18,6 +20,16 @@ export const describeAllTablesToolConfig = {
 
 export function createDescribeAllTablesHandler(runner: QueryRunner) {
   return async ({ database }: { database?: string }) => {
+    if (database) {
+      const dbValidation = validateIdentifier(database, 'Database');
+      if (!dbValidation.valid) {
+        return {
+          isError: true as const,
+          content: [{ type: 'text' as const, text: dbValidation.message! }],
+        };
+      }
+    }
+
     try {
       return await runner.withConnection(async (query) => {
         const db = await resolveDatabase(query, database);

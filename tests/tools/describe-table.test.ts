@@ -92,4 +92,28 @@ describe('describe_table tool handler', () => {
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain("Table doesn't exist");
   });
+
+  describe('입력 검증', () => {
+    it('테이블명에 세미콜론이 포함되면 거부한다', async () => {
+      const query = vi.fn();
+      const handler = createDescribeTableHandler(createMockRunner(query));
+
+      const result = await handler({ table: 'users; DROP TABLE users', database: 'mydb' });
+
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain('dangerous characters');
+      expect(query).not.toHaveBeenCalled();
+    });
+
+    it('database명에 위험 패턴이 포함되면 거부한다', async () => {
+      const query = vi.fn();
+      const handler = createDescribeTableHandler(createMockRunner(query));
+
+      const result = await handler({ table: 'users', database: 'db--' });
+
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain('dangerous characters');
+      expect(query).not.toHaveBeenCalled();
+    });
+  });
 });
