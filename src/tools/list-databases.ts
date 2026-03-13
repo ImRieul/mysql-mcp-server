@@ -5,7 +5,10 @@ export const listDatabasesToolName = 'list_databases';
 
 export const listDatabasesToolConfig = {
   title: 'List Databases',
-  description: 'List all databases on the MySQL server.',
+  description:
+    'List all databases on the MySQL server. ' +
+    'Use this as a starting point to discover available databases before querying. ' +
+    'Returns a JSON array of database names.',
 };
 
 export function createListDatabasesHandler(runner: QueryRunner) {

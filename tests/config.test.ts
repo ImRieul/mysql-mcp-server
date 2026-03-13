@@ -133,6 +133,28 @@ describe('parseArgs', () => {
     const result = parseArgs([]);
     expect(result.connectionString).toBeUndefined();
     expect(result.readonly).toBe(false);
+    expect(result.help).toBe(false);
+    expect(result.version).toBe(false);
+  });
+
+  it('--help 플래그를 파싱한다', () => {
+    const result = parseArgs(['--help']);
+    expect(result.help).toBe(true);
+  });
+
+  it('-h 플래그를 파싱한다', () => {
+    const result = parseArgs(['-h']);
+    expect(result.help).toBe(true);
+  });
+
+  it('--version 플래그를 파싱한다', () => {
+    const result = parseArgs(['--version']);
+    expect(result.version).toBe(true);
+  });
+
+  it('-v는 --version으로 인식하지 않는다', () => {
+    const result = parseArgs(['-v']);
+    expect(result.version).toBe(false);
   });
 });
 

@@ -74,4 +74,17 @@ describe('list_tables tool handler', () => {
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain('Unknown database');
   });
+
+  describe('입력 검증', () => {
+    it('database명에 위험 패턴이 포함되면 거부한다', async () => {
+      const query = vi.fn();
+      const handler = createListTablesHandler(createMockRunner(query));
+
+      const result = await handler({ database: 'db; DROP DATABASE db' });
+
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain('dangerous characters');
+      expect(query).not.toHaveBeenCalled();
+    });
+  });
 });

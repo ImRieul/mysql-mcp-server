@@ -144,4 +144,35 @@ describe('query tool handler', () => {
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain('Connection refused');
   });
+
+  describe('입력 검증', () => {
+    it('제어문자가 포함된 SQL을 거부한다', async () => {
+      const pool = createMockRunner();
+      const handler = createQueryHandler(pool, 100);
+
+      const result = await handler({ sql: 'SELECT * FROM users\x00' });
+
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain('control characters');
+      expect(pool.query).not.toHaveBeenCalled();
+    });
+
+    it('탭이 포함된 SQL은 허용한다', async () => {
+      const pool = createMockRunner([{ id: 1 }]);
+      const handler = createQueryHandler(pool, 100);
+
+      const result = await handler({ sql: 'SELECT *\tFROM users' });
+
+      expect(result.isError).toBeUndefined();
+    });
+
+    it('개행이 포함된 SQL은 허용한다', async () => {
+      const pool = createMockRunner([{ id: 1 }]);
+      const handler = createQueryHandler(pool, 100);
+
+      const result = await handler({ sql: 'SELECT *\nFROM users' });
+
+      expect(result.isError).toBeUndefined();
+    });
+  });
 });

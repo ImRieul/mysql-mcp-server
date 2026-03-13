@@ -1,12 +1,17 @@
 import { z } from 'zod';
 import type { QueryRunner } from '../query-runner.js';
 import { formatError } from './error-hint.js';
+import { validateSql } from './validate-input.js';
 
 export const queryToolName = 'query';
 
 export const queryToolConfig = {
   title: 'Query',
-  description: 'Execute a read-only SQL query (SELECT, SHOW, DESCRIBE, EXPLAIN).',
+  description:
+    'Execute a read-only SQL query (SELECT, SHOW, DESCRIBE, EXPLAIN). ' +
+    'LIMIT is auto-appended to SELECT/WITH queries without one (default: server maxRows). ' +
+    'Prefer specific columns over SELECT * to reduce response size. ' +
+    'For data modification, use the "execute" tool instead.',
   inputSchema: {
     sql: z
       .string()
@@ -26,6 +31,14 @@ function needsLimit(normalized: string): boolean {
 
 export function createQueryHandler(runner: QueryRunner, maxRows: number) {
   return async ({ sql }: { sql: string }) => {
+    const validation = validateSql(sql);
+    if (!validation.valid) {
+      return {
+        isError: true as const,
+        content: [{ type: 'text' as const, text: validation.message! }],
+      };
+    }
+
     const normalized = sql.trim().toUpperCase();
     const isAllowed = ALLOWED_PREFIXES.some((prefix) => normalized.startsWith(prefix));
 

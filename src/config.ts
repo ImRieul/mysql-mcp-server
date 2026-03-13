@@ -55,19 +55,32 @@ export function parseEnvConfig(env: Record<string, string | undefined>): MySQLCo
   };
 }
 
-export function parseArgs(argv: string[]): { connectionString?: string; readonly: boolean } {
+export interface ParsedArgs {
+  connectionString?: string;
+  readonly: boolean;
+  help: boolean;
+  version: boolean;
+}
+
+export function parseArgs(argv: string[]): ParsedArgs {
   let connectionString: string | undefined;
   let readonly = false;
+  let help = false;
+  let version = false;
 
   for (const arg of argv) {
     if (arg === '--readonly') {
       readonly = true;
+    } else if (arg === '--help' || arg === '-h') {
+      help = true;
+    } else if (arg === '--version') {
+      version = true;
     } else if (arg.startsWith('mysql://')) {
       connectionString = arg;
     }
   }
 
-  return { connectionString, readonly };
+  return { connectionString, readonly, help, version };
 }
 
 export function resolveConfig(argv: string[], env: Record<string, string | undefined> = process.env): AppConfig {
