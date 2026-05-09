@@ -48,6 +48,47 @@ Ou com uma string de conexão:
 }
 ```
 
+### Codex
+
+O Codex usa configuração TOML, não JSON com `mcpServers`. Adicione isto a `~/.codex/config.toml` ou a um `.codex/config.toml` com escopo de projeto:
+
+```toml
+[mcp_servers.mysql]
+command = "npx"
+args = ["-y", "@imrieul/mysql-mcp-server"]
+
+[mcp_servers.mysql.env]
+MYSQL_HOST = "localhost"
+MYSQL_PORT = "3306"
+MYSQL_USER = "root"
+MYSQL_PASSWORD = "your-password"
+MYSQL_DATABASE = "your-database"
+```
+
+### opencode
+
+Adicione isto a `opencode.json` ou `opencode.jsonc`:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "mysql": {
+      "type": "local",
+      "command": ["npx", "-y", "@imrieul/mysql-mcp-server"],
+      "enabled": true,
+      "environment": {
+        "MYSQL_HOST": "localhost",
+        "MYSQL_PORT": "3306",
+        "MYSQL_USER": "root",
+        "MYSQL_PASSWORD": "your-password",
+        "MYSQL_DATABASE": "your-database"
+      }
+    }
+  }
+}
+```
+
 ### Modo somente leitura com SSL
 
 ```json

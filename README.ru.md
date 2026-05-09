@@ -48,6 +48,47 @@
 }
 ```
 
+### Codex
+
+Codex использует TOML-конфигурацию, а не JSON с `mcpServers`. Добавьте это в `~/.codex/config.toml` или в проектный `.codex/config.toml`:
+
+```toml
+[mcp_servers.mysql]
+command = "npx"
+args = ["-y", "@imrieul/mysql-mcp-server"]
+
+[mcp_servers.mysql.env]
+MYSQL_HOST = "localhost"
+MYSQL_PORT = "3306"
+MYSQL_USER = "root"
+MYSQL_PASSWORD = "your-password"
+MYSQL_DATABASE = "your-database"
+```
+
+### opencode
+
+Добавьте это в `opencode.json` или `opencode.jsonc`:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "mysql": {
+      "type": "local",
+      "command": ["npx", "-y", "@imrieul/mysql-mcp-server"],
+      "enabled": true,
+      "environment": {
+        "MYSQL_HOST": "localhost",
+        "MYSQL_PORT": "3306",
+        "MYSQL_USER": "root",
+        "MYSQL_PASSWORD": "your-password",
+        "MYSQL_DATABASE": "your-database"
+      }
+    }
+  }
+}
+```
+
 ### Режим только для чтения с SSL
 
 ```json

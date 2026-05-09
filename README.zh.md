@@ -48,6 +48,47 @@
 }
 ```
 
+### Codex
+
+Codex 使用 TOML 配置，而不是 `mcpServers` JSON。将以下内容添加到 `~/.codex/config.toml` 或项目级 `.codex/config.toml`：
+
+```toml
+[mcp_servers.mysql]
+command = "npx"
+args = ["-y", "@imrieul/mysql-mcp-server"]
+
+[mcp_servers.mysql.env]
+MYSQL_HOST = "localhost"
+MYSQL_PORT = "3306"
+MYSQL_USER = "root"
+MYSQL_PASSWORD = "your-password"
+MYSQL_DATABASE = "your-database"
+```
+
+### opencode
+
+将以下内容添加到 `opencode.json` 或 `opencode.jsonc`：
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "mysql": {
+      "type": "local",
+      "command": ["npx", "-y", "@imrieul/mysql-mcp-server"],
+      "enabled": true,
+      "environment": {
+        "MYSQL_HOST": "localhost",
+        "MYSQL_PORT": "3306",
+        "MYSQL_USER": "root",
+        "MYSQL_PASSWORD": "your-password",
+        "MYSQL_DATABASE": "your-database"
+      }
+    }
+  }
+}
+```
+
 ### 启用 SSL 的只读模式
 
 ```json
